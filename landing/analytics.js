@@ -38,16 +38,29 @@
     return aliases[source] || source;
   };
   let referrer = '';
-  try { referrer = new URL(document.referrer).hostname.toLowerCase(); } catch (_) {}
+  let referrerProtocol = '';
+  try {
+    const url = new URL(document.referrer);
+    referrer = url.hostname.toLowerCase();
+    referrerProtocol = url.protocol;
+  } catch (_) {}
   const fromDomain = domain => referrer === domain || referrer.endsWith('.' + domain);
   const internal = referrer === location.hostname ||
     (['jpessay.com', 'www.jpessay.com'].includes(referrer) && production);
-  let source = '';
-  if (fromDomain('reddit.com') || fromDomain('redd.it')) source = 'reddit';
-  else if (fromDomain('x.com') || fromDomain('twitter.com') || fromDomain('t.co')) source = 'x';
-  else if (fromDomain('bsky.app') || fromDomain('bsky.social')) source = 'bluesky';
-  else if (fromDomain('dev.to')) source = 'devto';
-  else if (/^(www\.)?google\.(com|[a-z]{2}|com\.[a-z]{2}|co\.[a-z]{2})$/.test(referrer)) source = 'google';
+  const appSources = {
+    'com.twitter.android': 'x',
+    'com.reddit.frontpage': 'reddit',
+    'xyz.blueskyweb.app': 'bluesky',
+    'com.google.android.googlequicksearchbox': 'google',
+  };
+  let source = referrerProtocol === 'android-app:' ? appSources[referrer] || '' : '';
+  if (!source) {
+    if (fromDomain('reddit.com') || fromDomain('redd.it')) source = 'reddit';
+    else if (fromDomain('x.com') || fromDomain('twitter.com') || fromDomain('t.co')) source = 'x';
+    else if (fromDomain('bsky.app') || fromDomain('bsky.social')) source = 'bluesky';
+    else if (fromDomain('dev.to')) source = 'devto';
+    else if (/^(www\.)?google\.(com|[a-z]{2}|com\.[a-z]{2}|co\.[a-z]{2})$/.test(referrer)) source = 'google';
+  }
 
   let attribution;
   const utmSource = normalizeSource(params.get('utm_source'));
